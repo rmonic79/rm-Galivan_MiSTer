@@ -1,0 +1,75 @@
+# rmGalivan (Ufo Robo Dangar, Nichibutsu 1986) — project file list (sourced by the .qsf).
+# Impalcatura nata da un import di DJBoy (a sua volta fork NightSlashers per
+# jtframe_sdram64 multi-bank): del gioco di DJ Boy non resta piu' niente.
+# HW target: Z80B @6MHz main + Z80A @4MHz sound + YM3526 + 2x DAC 8bit R2R.
+
+# —— common infra (memory, overlays) ——
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/common/ddram_4port.sv
+
+# —— savestate: framework Raiden (fatto e validato), compartimentato in rtl/ss/ ——
+# Raiden e Darius condividono la stessa base (ss_ddr_gate/savestate_ram differiscono
+# solo nei commenti). Scelto Raiden: 32 slot (index[4:0], sotto-slot 0x38000) e
+# raiden_ss_manager (pausa frame-aligned + reload CPU post-load). La gestione Z80 di
+# Darius (tv80s auto_ss + auto_save_adaptor 358 bit) ci gira sopra 1:1.
+# Quello vecchio di DJBoy (mai collegato) e' stato rimosso.
+# Regola: cancellando rtl/ss/ + gli hook marcati [SS-HOOK] nel wiring, il core torna
+# identico al baseline senza savestate.
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/ss/raiden_ddr_if.sv
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/ss/savestate.sv
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/ss/savestate_ram.sv
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/ss/savestate_ui.sv
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/ss/memory_stream.sv
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/ss/ss_ddr_gate.sv
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/ss/raiden_ss_manager.sv
+
+# —— CPU: 2x Z80 (tv80 instrumentato savestate; T80 VHDL disponibile come alternativa) ——
+set_global_assignment -name VERILOG_FILE rtl/tv80/tv80_auto_ss.v
+set_global_assignment -name VHDL_FILE rtl/t80/T80pa.vhd
+set_global_assignment -name VHDL_FILE rtl/t80/T80s.vhd
+set_global_assignment -name VHDL_FILE rtl/t80/T80.vhd
+set_global_assignment -name VHDL_FILE rtl/t80/T80_ALU.vhd
+set_global_assignment -name VHDL_FILE rtl/t80/T80_MCode.vhd
+set_global_assignment -name VHDL_FILE rtl/t80/T80_Reg.vhd
+
+# —— audio Dangar: YM3526 = jtopl.v (OPL) dentro jtopl.qip, portato da Raiden ——
+# jtopl2.v (OPL2/YM3812) e' quello che usa Raiden; per Dangar serve jtopl.v.
+# INTERPOL e' un parametro del solo jt6295 (OKI): Dangar non ha OKI, non serve.
+set_global_assignment -name QIP_FILE rtl/sound/jtopl/jtopl.qip
+set_global_assignment -name VERILOG_FILE rtl/sound/jtframe_mixer.v
+set_global_assignment -name VERILOG_FILE rtl/sound/jtframe_fir_mono.v
+set_global_assignment -name VERILOG_FILE rtl/sound/jtframe_dual_ram.v
+
+# —— gioco: Ufo Robo Dangar (hardware Galivan) ——
+# Decode grafico validato staticamente con tools/catena.py contro i gfx_layout di MAME.
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/dangar/dangar_mem.sv
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/dangar/dangar_nb1412m2.sv
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/dangar/dangar_nb1414m4.sv
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/dangar/dangar_main.sv
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/dangar/dangar_biquad.sv
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/dangar/dangar_sound.sv
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/dangar/dangar_video.sv
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/dangar/dangar_top.sv
+
+# —— video ——
+# CRT Adjust / V-Size NON stanno qui: l'integrazione e' SYS-SIDE (sys/crt_adjust_sys.sv
+# + sys/crt_vsize.sv, registrati in sys/sys.qip, catena in sys/sys_top.v fra scanlines
+# e vga_osd). Cosi' l'HDMI resta bit-identico mentre si regola il CRT. Il core esporta
+# solo i valori OSD con le porte CRT_*. Vedi MiSTer_Discovery_Docs doc 17 e 18.
+# pause_overlay/pause_text sono la versione Raiden (gestiscono rotate_en);
+# raiden_rotate_fifo e' il client DDR del rotate TATE.
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/video/pause_overlay.sv
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/video/pause_text.sv
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/video/raiden_rotate_fifo.sv
+
+# —— SDRAM / PLL / jtframe glue ——
+set_global_assignment -name VERILOG_FILE rtl/jtframe_sdram64.v
+set_global_assignment -name VERILOG_FILE rtl/jtframe_sdram64_bank.v
+set_global_assignment -name VERILOG_FILE rtl/jtframe_sdram64_init.v
+set_global_assignment -name VERILOG_FILE rtl/jtframe_sdram64_latch.v
+set_global_assignment -name VERILOG_FILE rtl/jtframe_sdram64_rfsh.v
+set_global_assignment -name VERILOG_FILE rtl/jtframe/jtframe_sync.v
+set_global_assignment -name VERILOG_FILE rtl/jtframe/jtframe_ram.v
+# jtframe_dual_ram.v: ora unico in rtl/sound/ (versione Raiden). La copia DJBoy in
+# rtl/jtframe e' stata rimossa perche' definiva lo stesso modulo con codice diverso.
+set_global_assignment -name VERILOG_FILE rtl/pll.v
+set_global_assignment -name QIP_FILE rtl/pll.qip

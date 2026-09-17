@@ -1,0 +1,74 @@
+# Quartus build artifacts
+db/
+incremental_db/
+output_files/
+greybox_tmp/
+hc_output/
+simulation/
+.qsys_edit/
+*.qws
+*.rpt
+*.summary
+*.smsg
+*.done
+*.jdi
+*.pin
+*.sof
+*.pof
+*.sld
+PLLJ_PLLSPE_INFO.txt
+c5_pin_model_dump.txt
+jtag.cdf
+*_assignment_defaults.qdf
+*.rbf
+# ECCEZIONE: il bitstream gia' compilato si pubblica in releases/
+!releases/*.rbf
+
+# ModelSim
+work/
+transcript
+vsim.wlf
+*.wlf
+*.vstf
+modelsim.ini
+
+# ROM (copyright) e output MRA: mai nel repo
+rom/
+*.rom
+*.zip
+*.7z
+*.bin
+*.hex
+# ECCEZIONI: questi .hex NON sono dump di ROM, sono i font dell'overlay di pausa
+# che pause_overlay.sv e pause_text.sv caricano con $readmemh in sintesi.
+# Senza di loro il progetto non compila.
+!logo/font_6x8.hex
+!logo/font_darius.hex
+
+# lavoro locale (log di build, file temporanei dei tool)
+build_*.log
+*.log
+reference/
+mister_sim/out/
+mister_sim/build/
+
+# Simulatore: e' un tool esterno con dentro la sua toolchain (verilator, gcc,
+# ghdl) e i frame prodotti. 1.7 GB, tutto rigenerabile: fuori dal repo.
+mister_sim/
+
+# Strumenti di lavoro (generatori di MRA, disassemblatore, banchi): restano nel
+# repository di sviluppo, non fanno parte del rilascio.
+tools/
+__pycache__/
+*.pyc
+
+# Editor / OS / tooling
+CLAUDE.md
+.claude/
+*.bak
+*.tmp
+*~
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
